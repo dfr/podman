@@ -2,6 +2,16 @@ module github.com/containers/podman/v4
 
 go 1.16
 
+replace github.com/containers/buildah => /home/dfr/go/src/github.com/containers/buildah
+
+//replace github.com/containers/common => /home/dfr/go/src/github.com/containers/common
+
+//replace github.com/containers/image/v5 v5.21.1 => /home/dfr/go/src/github.com/containers/image
+
+//replace github.com/containers/storage => /home/dfr/go/src/github.com/containers/storage
+
+replace github.com/vishvananda/netlink v1.1.1-0.20220115184804-dd687eb2f2d4 => /home/dfr/go/src/github.com/vishvananda/netlink
+
 require (
 	github.com/BurntSushi/toml v1.2.0
 	github.com/blang/semver/v4 v4.0.0
