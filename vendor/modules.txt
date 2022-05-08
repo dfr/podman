@@ -91,7 +91,7 @@ github.com/containernetworking/cni/pkg/version
 # github.com/containernetworking/plugins v1.1.1
 ## explicit
 github.com/containernetworking/plugins/pkg/ns
-# github.com/containers/buildah v1.26.1-0.20220716095526-d31d27c357ab
+# github.com/containers/buildah v1.26.1-0.20220716095526-d31d27c357ab => /home/dfr/go/src/github.com/containers/buildah
 ## explicit
 github.com/containers/buildah
 github.com/containers/buildah/bind
@@ -629,6 +629,7 @@ github.com/openshift/imagebuilder/strslice
 github.com/ostreedev/ostree-go/pkg/glibobject
 github.com/ostreedev/ostree-go/pkg/otbuiltin
 # github.com/pkg/errors v0.9.1
+## explicit
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
@@ -722,7 +723,7 @@ github.com/vbauerster/mpb/v7
 github.com/vbauerster/mpb/v7/cwriter
 github.com/vbauerster/mpb/v7/decor
 github.com/vbauerster/mpb/v7/internal
-# github.com/vishvananda/netlink v1.1.1-0.20220115184804-dd687eb2f2d4
+# github.com/vishvananda/netlink v1.1.1-0.20220115184804-dd687eb2f2d4 => /home/dfr/go/src/github.com/vishvananda/netlink
 ## explicit
 github.com/vishvananda/netlink
 github.com/vishvananda/netlink/nl
@@ -925,4 +926,5 @@ gopkg.in/yaml.v2
 gopkg.in/yaml.v3
 # sigs.k8s.io/yaml v1.3.0
 sigs.k8s.io/yaml
+# github.com/containers/buildah => /home/dfr/go/src/github.com/containers/buildah
 # github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.1-0.20220617142545-8b9452f75cbc

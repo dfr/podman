@@ -331,7 +331,7 @@ func DefaultNamespaceOptions() (define.NamespaceOptions, error) {
 		{Name: string(specs.MountNamespace), Host: false},
 		{Name: string(specs.NetworkNamespace), Host: cfg.NetNS() == "host"},
 		{Name: string(specs.PIDNamespace), Host: cfg.PidNS() == "host"},
-		{Name: string(specs.UserNamespace), Host: cfg.Containers.UserNS == "host"},
+		{Name: string(specs.UserNamespace), Host: cfg.Containers.UserNS == "" || cfg.Containers.UserNS == "host"},
 		{Name: string(specs.UTSNamespace), Host: cfg.UTSNS() == "host"},
 	}
 	return options, nil
@@ -477,8 +477,10 @@ func runUsingRuntime(options RunOptions, configureNetwork bool, moreCreateArgs [
 			if stdioPipe, err = runMakeStdioPipe(int(uid), int(gid)); err != nil {
 				return 1, err
 			}
-			if err = runLabelStdioPipes(stdioPipe, spec.Process.SelinuxLabel, spec.Linux.MountLabel); err != nil {
-				return 1, err
+			if spec.Linux != nil {
+				if err = runLabelStdioPipes(stdioPipe, spec.Process.SelinuxLabel, spec.Linux.MountLabel); err != nil {
+					return 1, err
+				}
 			}
 			errorFds = []int{stdioPipe[unix.Stdout][0], stdioPipe[unix.Stderr][0]}
 			closeBeforeReadingErrorFds = []int{stdioPipe[unix.Stdout][1], stdioPipe[unix.Stderr][1]}
