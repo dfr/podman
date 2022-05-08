@@ -3,7 +3,6 @@ package generate
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/containers/common/libimage"

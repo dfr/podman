@@ -1,3 +1,5 @@
+//go:build linux
+
 package generate
 
 import (
@@ -58,8 +60,8 @@ func addRlimits(s *specgen.SpecGenerator, g *generate.Generator) {
 	// files and number of processes to the maximum they can be set to
 	// (without overriding a sysctl)
 	if !nofileSet {
-		max := define.RLimitDefaultValue
-		current := define.RLimitDefaultValue
+		max := RlimT(define.RLimitDefaultValue)
+		current := RlimT(define.RLimitDefaultValue)
 		if isRootless {
 			var rlimit unix.Rlimit
 			if err := unix.Getrlimit(unix.RLIMIT_NOFILE, &rlimit); err != nil {
@@ -72,11 +74,11 @@ func addRlimits(s *specgen.SpecGenerator, g *generate.Generator) {
 				max = rlimit.Max
 			}
 		}
-		g.AddProcessRlimits("RLIMIT_NOFILE", max, current)
+		g.AddProcessRlimits("RLIMIT_NOFILE", uint64(max), uint64(current))
 	}
 	if !nprocSet {
-		max := define.RLimitDefaultValue
-		current := define.RLimitDefaultValue
+		max := RlimT(define.RLimitDefaultValue)
+		current := RlimT(define.RLimitDefaultValue)
 		if isRootless {
 			var rlimit unix.Rlimit
 			if err := unix.Getrlimit(unix.RLIMIT_NPROC, &rlimit); err != nil {
@@ -89,7 +91,7 @@ func addRlimits(s *specgen.SpecGenerator, g *generate.Generator) {
 				max = rlimit.Max
 			}
 		}
-		g.AddProcessRlimits("RLIMIT_NPROC", max, current)
+		g.AddProcessRlimits("RLIMIT_NPROC", uint64(max), uint64(current))
 	}
 }
 
