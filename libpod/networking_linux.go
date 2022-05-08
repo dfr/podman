@@ -672,7 +672,7 @@ func (r *Runtime) configureNetNS(ctr *Container, ctrNS ns.NetNS) (status map[str
 }
 
 // Create and configure a new network namespace for a container
-func (r *Runtime) createNetNS(ctr *Container) (n ns.NetNS, q map[string]types.StatusBlock, retErr error) {
+*func (r *Runtime) createNetNS(ctr *Container) (n ns.NetNS, q map[string]types.StatusBlock, retErr error) {
 	ctrNS, err := netns.NewNS()
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating network namespace for container %s: %w", ctr.ID(), err)

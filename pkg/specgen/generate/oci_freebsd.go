@@ -17,7 +17,7 @@ import (
 )
 
 // Produce the final command for the container.
-func makeCommand(ctx context.Context, s *specgen.SpecGenerator, imageData *libimage.ImageData, rtc *config.Config) ([]string, error) {
+func makeCommand(s *specgen.SpecGenerator, imageData *libimage.ImageData, rtc *config.Config) ([]string, error) {
 	finalCommand := []string{}
 
 	entrypoint := s.Entrypoint
@@ -132,4 +132,9 @@ func SpecGenToOCI(ctx context.Context, s *specgen.SpecGenerator, rt *libpod.Runt
 	}
 
 	return configSpec, nil
+}
+
+func WeightDevices(wtDevices map[string]spec.LinuxWeightDevice) ([]spec.LinuxWeightDevice, error) {
+	devs := []spec.LinuxWeightDevice{}
+	return devs, nil
 }

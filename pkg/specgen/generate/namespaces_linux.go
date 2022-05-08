@@ -25,7 +25,7 @@ func specConfigureNamespaces(s *specgen.SpecGenerator, g *generate.Generator, rt
 	switch s.PidNS.NSMode {
 	case specgen.Path:
 		if _, err := os.Stat(s.PidNS.Value); err != nil {
-			return errors.Wrap(err, "cannot find specified PID namespace path")
+			return fmt.Errorf("cannot find specified PID namespace path: %w", err)
 		}
 		if err := g.AddOrReplaceLinuxNamespace(string(spec.PIDNamespace), s.PidNS.Value); err != nil {
 			return err
@@ -44,7 +44,7 @@ func specConfigureNamespaces(s *specgen.SpecGenerator, g *generate.Generator, rt
 	switch s.IpcNS.NSMode {
 	case specgen.Path:
 		if _, err := os.Stat(s.IpcNS.Value); err != nil {
-			return errors.Wrap(err, "cannot find specified IPC namespace path")
+			return fmt.Errorf("cannot find specified IPC namespace path: %w", err)
 		}
 		if err := g.AddOrReplaceLinuxNamespace(string(spec.IPCNamespace), s.IpcNS.Value); err != nil {
 			return err
@@ -63,7 +63,7 @@ func specConfigureNamespaces(s *specgen.SpecGenerator, g *generate.Generator, rt
 	switch s.UtsNS.NSMode {
 	case specgen.Path:
 		if _, err := os.Stat(s.UtsNS.Value); err != nil {
-			return errors.Wrap(err, "cannot find specified UTS namespace path")
+			return fmt.Errorf("cannot find specified UTS namespace path: %w", err)
 		}
 		if err := g.AddOrReplaceLinuxNamespace(string(spec.UTSNamespace), s.UtsNS.Value); err != nil {
 			return err
@@ -86,13 +86,13 @@ func specConfigureNamespaces(s *specgen.SpecGenerator, g *generate.Generator, rt
 		case s.UtsNS.NSMode == specgen.FromContainer:
 			utsCtr, err := rt.LookupContainer(s.UtsNS.Value)
 			if err != nil {
-				return errors.Wrapf(err, "error looking up container to share uts namespace with")
+				return fmt.Errorf("error looking up container to share uts namespace with: %w", err)
 			}
 			hostname = utsCtr.Hostname()
 		case (s.NetNS.NSMode == specgen.Host && hostname == "") || s.UtsNS.NSMode == specgen.Host:
 			tmpHostname, err := os.Hostname()
 			if err != nil {
-				return errors.Wrap(err, "unable to retrieve hostname of the host")
+				return fmt.Errorf("unable to retrieve hostname of the host: %w", err)
 			}
 			hostname = tmpHostname
 		default:
@@ -121,7 +121,7 @@ func specConfigureNamespaces(s *specgen.SpecGenerator, g *generate.Generator, rt
 	switch s.CgroupNS.NSMode {
 	case specgen.Path:
 		if _, err := os.Stat(s.CgroupNS.Value); err != nil {
-			return errors.Wrap(err, "cannot find specified cgroup namespace path")
+			return fmt.Errorf("cannot find specified cgroup namespace path: %w", err)
 		}
 		if err := g.AddOrReplaceLinuxNamespace(string(spec.CgroupNamespace), s.CgroupNS.Value); err != nil {
 			return err
@@ -140,7 +140,7 @@ func specConfigureNamespaces(s *specgen.SpecGenerator, g *generate.Generator, rt
 	switch s.NetNS.NSMode {
 	case specgen.Path:
 		if _, err := os.Stat(s.NetNS.Value); err != nil {
-			return errors.Wrap(err, "cannot find specified network namespace path")
+			return fmt.Errorf("cannot find specified network namespace path: %w", err)
 		}
 		if err := g.AddOrReplaceLinuxNamespace(string(spec.NetworkNamespace), s.NetNS.Value); err != nil {
 			return err

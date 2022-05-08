@@ -1,14 +1,11 @@
-//go:build linux
+//go:build freebsd
 
 package libpod
 
 import (
-	"errors"
 	"fmt"
-	"sort"
 	"strings"
 
-	"github.com/containers/common/pkg/config"
 	"github.com/containers/podman/v4/libpod/define"
 	"github.com/containers/podman/v4/libpod/driver"
 	"github.com/containers/podman/v4/pkg/util"
@@ -17,6 +14,7 @@ import (
 	spec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/runtime-tools/generate"
 	"github.com/opencontainers/runtime-tools/validate"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/syndtr/gocapability/capability"
 )
@@ -26,15 +24,15 @@ import (
 func (c *Container) inspectLocked(size bool) (*define.InspectContainerData, error) {
 	storeCtr, err := c.runtime.store.Container(c.ID())
 	if err != nil {
-		return nil, fmt.Errorf("error getting container from store %q: %w", c.ID(), err)
+		return nil, errors.Wrapf(err, "error getting container from store %q", c.ID())
 	}
 	layer, err := c.runtime.store.Layer(storeCtr.LayerID)
 	if err != nil {
-		return nil, fmt.Errorf("error reading information about layer %q: %w", storeCtr.LayerID, err)
+		return nil, errors.Wrapf(err, "error reading information about layer %q", storeCtr.LayerID)
 	}
 	driverData, err := driver.GetDriverData(c.runtime.store, layer.ID)
 	if err != nil {
-		return nil, fmt.Errorf("error getting graph driver info %q: %w", c.ID(), err)
+		return nil, errors.Wrapf(err, "error getting graph driver info %q", c.ID())
 	}
 	return c.getContainerInspectData(size, driverData)
 }
@@ -111,16 +109,6 @@ func (c *Container) getContainerInspectData(size bool, driverData *define.Driver
 		return nil, err
 	}
 
-	cgroupPath, err := c.cGroupPath()
-	if err != nil {
-		// Handle the case where the container is not running or has no cgroup.
-		if errors.Is(err, define.ErrNoCgroups) || errors.Is(err, define.ErrCtrStopped) {
-			cgroupPath = ""
-		} else {
-			return nil, err
-		}
-	}
-
 	data := &define.InspectContainerData{
 		ID:      config.ID,
 		Created: config.CreatedTime,
@@ -140,7 +128,6 @@ func (c *Container) getContainerInspectData(size bool, driverData *define.Driver
 			StartedAt:      runtimeInfo.StartedTime,
 			FinishedAt:     runtimeInfo.FinishedTime,
 			Checkpointed:   runtimeInfo.Checkpointed,
-			CgroupPath:     cgroupPath,
 			RestoredAt:     runtimeInfo.RestoredTime,
 			CheckpointedAt: runtimeInfo.CheckpointedTime,
 			Restored:       runtimeInfo.Restored,
@@ -148,32 +135,28 @@ func (c *Container) getContainerInspectData(size bool, driverData *define.Driver
 			CheckpointLog:  runtimeInfo.CheckpointLog,
 			RestoreLog:     runtimeInfo.RestoreLog,
 		},
-		Image:           config.RootfsImageID,
-		ImageName:       config.RootfsImageName,
-		Namespace:       config.Namespace,
-		Rootfs:          config.Rootfs,
-		Pod:             config.Pod,
-		ResolvConfPath:  resolvPath,
-		HostnamePath:    hostnamePath,
-		HostsPath:       hostsPath,
-		StaticDir:       config.StaticDir,
-		OCIRuntime:      config.OCIRuntime,
-		ConmonPidFile:   config.ConmonPidFile,
-		PidFile:         config.PidFile,
-		Name:            config.Name,
-		RestartCount:    int32(runtimeInfo.RestartCount),
-		Driver:          driverData.Name,
-		MountLabel:      config.MountLabel,
-		ProcessLabel:    config.ProcessLabel,
-		EffectiveCaps:   ctrSpec.Process.Capabilities.Effective,
-		BoundingCaps:    ctrSpec.Process.Capabilities.Bounding,
-		AppArmorProfile: ctrSpec.Process.ApparmorProfile,
-		ExecIDs:         execIDs,
-		GraphDriver:     driverData,
-		Mounts:          inspectMounts,
-		Dependencies:    c.Dependencies(),
-		IsInfra:         c.IsInfra(),
-		IsService:       c.IsService(),
+		Image:          config.RootfsImageID,
+		ImageName:      config.RootfsImageName,
+		Namespace:      config.Namespace,
+		Rootfs:         config.Rootfs,
+		Pod:            config.Pod,
+		ResolvConfPath: resolvPath,
+		HostnamePath:   hostnamePath,
+		HostsPath:      hostsPath,
+		StaticDir:      config.StaticDir,
+		OCIRuntime:     config.OCIRuntime,
+		ConmonPidFile:  config.ConmonPidFile,
+		PidFile:        config.PidFile,
+		Name:           config.Name,
+		RestartCount:   int32(runtimeInfo.RestartCount),
+		Driver:         driverData.Name,
+		MountLabel:     config.MountLabel,
+		ProcessLabel:   config.ProcessLabel,
+		ExecIDs:        execIDs,
+		GraphDriver:    driverData,
+		Mounts:         inspectMounts,
+		Dependencies:   c.Dependencies(),
+		IsInfra:        c.IsInfra(),
 	}
 
 	if c.state.ConfigPath != "" {
@@ -243,7 +226,7 @@ func (c *Container) GetMounts(namedVolumes []*ContainerNamedVolume, imageVolumes
 		// volume.
 		volFromDB, err := c.runtime.state.Volume(volume.Name)
 		if err != nil {
-			return nil, fmt.Errorf("error looking up volume %s in container %s config: %w", volume.Name, c.ID(), err)
+			return nil, errors.Wrapf(err, "error looking up volume %s in container %s config", volume.Name, c.ID())
 		}
 		mountStruct.Driver = volFromDB.Driver()
 
@@ -447,11 +430,6 @@ func (c *Container) generateInspectContainerHostConfig(ctrSpec *spec.Spec, named
 	restartPolicy.Name = c.config.RestartPolicy
 	restartPolicy.MaximumRetryCount = c.config.RestartRetries
 	hostConfig.RestartPolicy = restartPolicy
-	if c.config.NoCgroups {
-		hostConfig.Cgroups = "disabled"
-	} else {
-		hostConfig.Cgroups = "default"
-	}
 
 	hostConfig.Dns = make([]string, 0, len(c.config.DNSServer))
 	for _, dns := range c.config.DNSServer {
@@ -549,7 +527,6 @@ func (c *Container) generateInspectContainerHostConfig(ctrSpec *spec.Spec, named
 			if ctrSpec.Linux.Resources.Pids != nil {
 				hostConfig.PidsLimit = ctrSpec.Linux.Resources.Pids.Limit
 			}
-			hostConfig.CgroupConf = ctrSpec.Linux.Resources.Unified
 			if ctrSpec.Linux.Resources.BlockIO != nil {
 				if ctrSpec.Linux.Resources.BlockIO.Weight != nil {
 					hostConfig.BlkioWeight = *ctrSpec.Linux.Resources.BlockIO.Weight
@@ -657,15 +634,6 @@ func (c *Container) generateInspectContainerHostConfig(ctrSpec *spec.Spec, named
 		hostConfig.PortBindings = make(map[string][]define.InspectHostPort)
 	}
 
-	// Cap add and cap drop.
-	// We need a default set of capabilities to compare against.
-	// The OCI generate package has one, and is commonly used, so we'll
-	// use it.
-	// Problem: there are 5 sets of capabilities.
-	// Use the bounding set for this computation, it's the most encompassing
-	// (but still not perfect).
-	capAdd := []string{}
-	capDrop := []string{}
 	// No point in continuing if we got a spec without a Process block...
 	if ctrSpec.Process != nil {
 		// Max an O(1) lookup table for default bounding caps.
@@ -687,25 +655,7 @@ func (c *Container) generateInspectContainerHostConfig(ctrSpec *spec.Spec, named
 				boundingCaps[fmt.Sprintf("CAP_%s", strings.ToUpper(cap.String()))] = true
 			}
 		}
-		// Iterate through spec caps.
-		// If it's not in default bounding caps, it was added.
-		// If it is, delete from the default set. Whatever remains after
-		// we finish are the dropped caps.
-		for _, cap := range ctrSpec.Process.Capabilities.Bounding {
-			if _, ok := boundingCaps[cap]; ok {
-				delete(boundingCaps, cap)
-			} else {
-				capAdd = append(capAdd, cap)
-			}
-		}
-		for cap := range boundingCaps {
-			capDrop = append(capDrop, cap)
-		}
-		// Sort CapDrop so it displays in consistent order (GH #9490)
-		sort.Strings(capDrop)
 	}
-	hostConfig.CapAdd = capAdd
-	hostConfig.CapDrop = capDrop
 	switch {
 	case c.config.IPCNsCtr != "":
 		hostConfig.IpcMode = fmt.Sprintf("container:%s", c.config.IPCNsCtr)
@@ -731,44 +681,6 @@ func (c *Container) generateInspectContainerHostConfig(ctrSpec *spec.Spec, named
 	if hostConfig.IpcMode == "" {
 		hostConfig.IpcMode = "shareable"
 	}
-
-	// Cgroup namespace mode
-	cgroupMode := ""
-	if c.config.CgroupNsCtr != "" {
-		cgroupMode = fmt.Sprintf("container:%s", c.config.CgroupNsCtr)
-	} else if ctrSpec.Linux != nil {
-		// Locate the spec's cgroup namespace
-		// If there is none, it's cgroup=host.
-		// If there is one and it has a path, it's "ns:".
-		// If there is no path, it's private.
-		for _, ns := range ctrSpec.Linux.Namespaces {
-			if ns.Type == spec.CgroupNamespace {
-				if ns.Path != "" {
-					cgroupMode = fmt.Sprintf("ns:%s", ns.Path)
-				} else {
-					cgroupMode = "private"
-				}
-			}
-		}
-		if cgroupMode == "" {
-			cgroupMode = "host"
-		}
-	}
-	hostConfig.CgroupMode = cgroupMode
-
-	// Cgroup parent
-	// Need to check if it's the default, and not print if so.
-	defaultCgroupParent := ""
-	switch c.CgroupManager() {
-	case config.CgroupfsCgroupsManager:
-		defaultCgroupParent = CgroupfsDefaultCgroupParent
-	case config.SystemdCgroupsManager:
-		defaultCgroupParent = SystemdDefaultCgroupParent
-	}
-	if c.config.CgroupParent != defaultCgroupParent {
-		hostConfig.CgroupParent = c.config.CgroupParent
-	}
-	hostConfig.CgroupManager = c.CgroupManager()
 
 	// PID namespace mode
 	pidMode := ""
@@ -796,8 +708,28 @@ func (c *Container) generateInspectContainerHostConfig(ctrSpec *spec.Spec, named
 	hostConfig.PidMode = pidMode
 
 	// UTS namespace mode
-	utsMode := c.NamespaceMode(spec.UTSNamespace, ctrSpec)
-
+	utsMode := ""
+	if c.config.UTSNsCtr != "" {
+		utsMode = fmt.Sprintf("container:%s", c.config.UTSNsCtr)
+	} else if ctrSpec.Linux != nil {
+		// Locate the spec's UTS namespace.
+		// If there is none, it's uts=host.
+		// If there is one and it has a path, it's "ns:".
+		// If there is no path, it's default - the empty string.
+		for _, ns := range ctrSpec.Linux.Namespaces {
+			if ns.Type == spec.UTSNamespace {
+				if ns.Path != "" {
+					utsMode = fmt.Sprintf("ns:%s", ns.Path)
+				} else {
+					utsMode = "private"
+				}
+				break
+			}
+		}
+		if utsMode == "" {
+			utsMode = "host"
+		}
+	}
 	hostConfig.UTSMode = utsMode
 
 	// User namespace mode
@@ -828,7 +760,7 @@ func (c *Container) generateInspectContainerHostConfig(ctrSpec *spec.Spec, named
 	// Do not include if privileged - assumed that all devices will be
 	// included.
 	var err error
-	hostConfig.Devices, err = c.GetDevices(hostConfig.Privileged, *ctrSpec, deviceNodes)
+	hostConfig.Devices, err = c.GetDevices(*&hostConfig.Privileged, *ctrSpec, deviceNodes)
 	if err != nil {
 		return nil, err
 	}

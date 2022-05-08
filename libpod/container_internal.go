@@ -292,7 +292,7 @@ func (c *Container) handleRestartPolicy(ctx context.Context) (_ bool, retErr err
 	}
 
 	// set up slirp4netns again because slirp4netns will die when conmon exits
-	if c.config.NetMode.IsSlirp4netns() {
+	/*if c.config.NetMode.IsSlirp4netns() {
 		err := c.runtime.setupSlirp4netns(c, c.state.NetNS)
 		if err != nil {
 			return false, err
@@ -306,7 +306,7 @@ func (c *Container) handleRestartPolicy(ctx context.Context) (_ bool, retErr err
 		if err != nil {
 			return false, err
 		}
-	}
+	}*/
 
 	if c.state.State == define.ContainerStateStopped {
 		// Reinitialize the container if we need to
@@ -985,9 +985,9 @@ func (c *Container) completeNetworkSetup() error {
 	if err := c.syncContainer(); err != nil {
 		return err
 	}
-	if err := c.runtime.setupNetNS(c); err != nil {
+	/*if err := c.runtime.setupNetNS(c); err != nil {
 		return err
-	}
+	}*/
 	if err := c.save(); err != nil {
 		return err
 	}
@@ -1556,7 +1556,7 @@ func (c *Container) mountStorage() (_ string, deferredErr error) {
 
 	rootUID, rootGID := c.RootUID(), c.RootGID()
 
-	dirfd, err := unix.Open(mountPoint, unix.O_RDONLY|unix.O_PATH, 0)
+	dirfd, err := unix.Open(mountPoint, unix.O_RDONLY|O_PATH, 0)
 	if err != nil {
 		return "", fmt.Errorf("open mount point: %w", err)
 	}
@@ -1579,7 +1579,7 @@ func (c *Container) mountStorage() (_ string, deferredErr error) {
 		return "", fmt.Errorf("resolve /etc in the container: %w", err)
 	}
 
-	etcInTheContainerFd, err := unix.Open(etcInTheContainerPath, unix.O_RDONLY|unix.O_PATH, 0)
+	etcInTheContainerFd, err := unix.Open(etcInTheContainerPath, unix.O_RDONLY|O_PATH, 0)
 	if err != nil {
 		return "", fmt.Errorf("open /etc in the container: %w", err)
 	}

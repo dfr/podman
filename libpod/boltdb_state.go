@@ -855,6 +855,7 @@ func (s *BoltState) UpdateContainer(ctr *Container) error {
 		return err
 	}
 
+	logrus.Debugf("UpdateContainer: id=%v, netNSPath=%s", ctr.ID(), netNSPath)
 	// Handle network namespace.
 	if os.Geteuid() == 0 {
 		// Do it only when root, either on the host or as root in the
@@ -889,6 +890,7 @@ func (s *BoltState) SaveContainer(ctr *Container) error {
 		return fmt.Errorf("error marshalling container %s state to JSON: %w", ctr.ID(), err)
 	}
 	netNSPath := getNetNSPath(ctr)
+	logrus.Debugf("SaveContainer: id=%v, netNSPath=%s", ctr.ID(), netNSPath)
 
 	ctrID := []byte(ctr.ID())
 

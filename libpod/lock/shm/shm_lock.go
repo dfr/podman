@@ -1,5 +1,6 @@
-//go:build linux && cgo
-// +build linux,cgo
+//go:build (linux || freebsd) && cgo
+// +build linux freebsd
+// +build cgo
 
 package shm
 
