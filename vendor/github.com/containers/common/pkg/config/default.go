@@ -379,7 +379,7 @@ func defaultConfigFromMemory() (*EngineConfig, error) {
 		"runsc",
 		"krun",
 	}
-	c.RuntimeSupportsNoCgroups = []string{"crun", "krun"}
+	c.RuntimeSupportsNoCgroups = []string{"crun", "krun", "runj"}
 	c.RuntimeSupportsKVM = []string{"kata", "kata-runtime", "kata-qemu", "kata-fc", "krun"}
 	c.InitPath = DefaultInitPath
 	c.NoPivotRoot = false
