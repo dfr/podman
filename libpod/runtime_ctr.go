@@ -325,11 +325,11 @@ func (r *Runtime) setupContainer(ctx context.Context, ctr *Container) (_ *Contai
 	}
 
 	// Check NoCgroups support
-	if ctr.config.NoCgroups {
+	/*if ctr.config.NoCgroups {
 		if !ctr.ociRuntime.SupportsNoCgroups() {
 			return nil, fmt.Errorf("requested OCI runtime %s is not compatible with NoCgroups: %w", ctr.ociRuntime.Name(), define.ErrInvalidArg)
 		}
-	}
+	}*/
 
 	var pod *Pod
 	if ctr.config.Pod != "" {
