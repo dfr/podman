@@ -16,8 +16,8 @@ require (
 	github.com/containers/conmon v2.0.20+incompatible
 	github.com/containers/image/v5 v5.22.1-0.20220907162003-651744379993
 	github.com/containers/ocicrypt v1.1.5
-	github.com/containers/psgo v1.7.3
-	github.com/containers/storage v1.42.1-0.20220911223137-e11b246de159
+	github.com/containers/psgo v1.8.0
+	github.com/containers/storage v1.43.0
 	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/coreos/stream-metadata-go v0.0.0-20210225230131-70edb9eb47b3
 	github.com/cyphar/filepath-securejoin v0.2.3
@@ -109,7 +109,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mattn/go-shellwords v1.0.12 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
-	github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible // indirect
+	github.com/mistifyio/go-zfs/v3 v3.0.0 // indirect
 	github.com/moby/sys/mount v0.3.3 // indirect
 	github.com/moby/sys/mountinfo v0.6.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
