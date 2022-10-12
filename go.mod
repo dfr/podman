@@ -52,7 +52,7 @@ require (
 	github.com/openshift/imagebuilder v1.2.4-0.20220711175835-4151e43600df
 	github.com/rootless-containers/rootlesskit v1.0.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
@@ -99,7 +99,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/honeycombio/libhoney-go v1.15.8 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jinzhu/copier v0.3.5 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
