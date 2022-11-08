@@ -1,5 +1,11 @@
 # -*- bash -*-
 
+function is_freebsd {
+    [ "$(uname -s)" = "FreeBSD" ]
+}
+
+export CONTAINERS_STORAGE_CONF=/home/dfr/tmp/storage.conf
+
 # Podman command to run; may be podman-remote
 PODMAN=${PODMAN:-podman}
 QUADLET=${QUADLET:-/usr/libexec/podman/quadlet}
@@ -12,9 +18,14 @@ PODMAN_RUNTIME=
 
 # Standard image to use for most tests
 PODMAN_TEST_IMAGE_REGISTRY=${PODMAN_TEST_IMAGE_REGISTRY:-"quay.io"}
-PODMAN_TEST_IMAGE_USER=${PODMAN_TEST_IMAGE_USER:-"libpod"}
 PODMAN_TEST_IMAGE_NAME=${PODMAN_TEST_IMAGE_NAME:-"testimage"}
-PODMAN_TEST_IMAGE_TAG=${PODMAN_TEST_IMAGE_TAG:-"20241011"}
+if is_freebsd; then
+    PODMAN_TEST_IMAGE_USER=${PODMAN_TEST_IMAGE_USER:-"dougrabson"}
+    PODMAN_TEST_IMAGE_TAG=${PODMAN_TEST_IMAGE_TAG:-"20250515"}
+else
+    PODMAN_TEST_IMAGE_USER=${PODMAN_TEST_IMAGE_USER:-"libpod"}
+    PODMAN_TEST_IMAGE_TAG=${PODMAN_TEST_IMAGE_TAG:-"20241011"}
+fi
 PODMAN_TEST_IMAGE_FQN="$PODMAN_TEST_IMAGE_REGISTRY/$PODMAN_TEST_IMAGE_USER/$PODMAN_TEST_IMAGE_NAME:$PODMAN_TEST_IMAGE_TAG"
 
 # Larger image containing systemd tools.
@@ -53,6 +64,49 @@ fi
 
 # Used in helpers.network, needed here in teardown
 PORT_LOCK_DIR=$BATS_SUITE_TMPDIR/reserved-ports
+
+# On FreeBSD, some utilities are limited to strict POSIX. Since this
+# test suite was developed using GNU coreutils, we redirect from
+# FreeBSD system utilities to coreutils to get the expected
+# functionality.
+if is_freebsd; then
+    function cp {
+	gcp "$@"
+    }
+    function date {
+	gdate "$@"
+    }
+    function expr {
+	gexpr "$@"
+    }
+    function mkdir {
+	gmkdir "$@"
+    }
+    function mktemp {
+	gmktemp "$@"
+    }
+    function sed {
+	gsed "$@"
+    }
+    function shuf {
+	gshuf "$@"
+    }
+    function tar {
+	gtar "$@"
+    }
+    function timeout {
+	gtimeout "$@"
+    }
+    function tr {
+	gtr "$@"
+    }
+    function truncate {
+	gtruncate "$@"
+    }
+    function wc {
+	gwc "$@"
+    }
+fi
 
 ###############################################################################
 # BEGIN tools for fetching & caching test images

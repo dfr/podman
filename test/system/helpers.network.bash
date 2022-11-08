@@ -2,6 +2,12 @@
 
 _cached_has_slirp4netns=
 
+if [ "$(uname -s)" = "FreeBSD" ]; then
+    function shuf {
+	gshuf "$@"
+    }
+fi
+
 ### Feature Checks #############################################################
 
 # has_ipv4() - Check if one default route is available for IPv4
@@ -362,11 +368,13 @@ function port_is_bound() {
         local proto="tcp"
     fi
 
-    # /proc/net/tcp is insufficient: it does not show some rootless ports.
-    # ss does, so check it first.
-    run ss -${proto:0:1}nlH sport = $port
-    if [[ -n "$output" ]]; then
-        return
+    if [ "$(uname -s)" = "Linux" ]; then
+	# /proc/net/tcp is insufficient: it does not show some rootless ports.
+	# ss does, so check it first.
+	run ss -${proto:0:1}nlH sport = $port
+	if [[ -n "$output" ]]; then
+	    return
+	fi
     fi
 
     port=$(printf %04X ${port})
