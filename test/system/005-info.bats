@@ -20,11 +20,14 @@ graphRoot:
 graphStatus:
 imageStore:\\\s\\\+number: 1
 runRoot:
+"
+    if [ "$(uname -s)" = "Linux" ]; then
+	expected_keys="$expected_keys
 cgroupManager: \\\(systemd\\\|cgroupfs\\\)
 cgroupVersion: v[12]
 "
+    fi
     defer-assertion-failures
-
     while read expect; do
         is "$output" ".*$expect" "output includes '$expect'"
     done < <(parse_table "$expected_keys")
@@ -42,9 +45,6 @@ cgroupVersion: v[12]
 host.buildahVersion       | [1-9][0-9]*\.[0-9.]\\\+.*
 host.conmon.path          | $expr_path
 host.conmon.package       | .*conmon.*
-host.cgroupManager        | \\\(systemd\\\|cgroupfs\\\)
-host.cgroupVersion        | v[12]
-host.networkBackendInfo   | .*dns.*package.*
 host.ociRuntime.path      | $expr_path
 host.pasta                | .*executable.*package.*
 host.rootlessNetworkCmd   | pasta
@@ -52,12 +52,18 @@ store.configFile          | $expr_path
 store.graphDriverName     | [a-z0-9]\\\+\\\$
 store.graphRoot           | $expr_path
 store.imageStore.number   | 1
-host.slirp4netns.executable | $expr_path
 "
 
+    if [ "$(uname -s)" = "Linux" ]; then
+	tests="$tests
+host.cgroupManager        | \\\(systemd\\\|cgroupfs\\\)
+host.cgroupVersion        | v[12]
+host.networkBackendInfo   | .*dns.*package.*
+"
+    fi
     defer-assertion-failures
 
-    while read field expect; do
+    parse_table "$tests" | while read field expect; do
         actual=$(echo "$output" | jq -r ".$field")
         dprint "# actual=<$actual> expect=<$expect>"
         is "$actual" "$expect" "jq .$field"
@@ -95,8 +101,12 @@ host.slirp4netns.executable | $expr_path
             fi
         fi
 
-        # Everywhere other than RHEL, the only supported network is netavark
-        CI_DESIRED_NETWORK="netavark"
+        # Everywhere other than RHEL and FreeBSD, the only supported network is netavark
+	if is_freebsd; then
+		CI_DESIRED_NETWORK="cni"
+	else
+		CI_DESIRED_NETWORK="netavark"
+	fi
     fi
 
     run_podman info --format '{{.Host.NetworkBackend}}'
@@ -184,6 +194,7 @@ host.slirp4netns.executable | $expr_path
 
 @test "podman info - additional image stores" {
     skip_if_remote "--storage-opt flag is not supported for remote"
+    skip_if_freebsd "FreeBSD uses zfs storage which does not have a zfs.imagestore option"
     driver=$(podman_storage_driver)
     store1=$PODMAN_TMPDIR/store1
     store2=$PODMAN_TMPDIR/store2
