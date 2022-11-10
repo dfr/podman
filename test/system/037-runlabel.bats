@@ -4,6 +4,7 @@ load helpers
 
 @test "podman container runlabel test" {
     skip_if_remote "container runlabel is not supported for remote"
+    skip_if_freebsd
     tmpdir=$PODMAN_TMPDIR/runlabel-test
     mkdir -p $tmpdir
     containerfile=$tmpdir/Containerfile

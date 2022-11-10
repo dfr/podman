@@ -105,6 +105,7 @@ echo $rand        |   0 | $rand
     skip_if_cgroupsv1 "run --uidmap fails on cgroups v1 (issue 15025, wontfix)"
     skip_if_rootless "cannot umount as rootless"
     skip_if_remote "TODO Fix this for remote case"
+    skip_if_freebsd "uidmap not supported"
 
     run_podman run --rm --uidmap 0:100:10000 $IMAGE mount
     assert "$output" !~ /sys/kernel "unwanted /sys/kernel in 'mount' output"
@@ -273,8 +274,13 @@ echo $rand        |   0 | $rand
     # FIXME: 'echo' and 'ls' are to help debug #7580, a CI flake
     echo "conmon pid = $conmon_pid_from_file"
     ls -l /proc/$conmon_pid_from_file
-    is "$(readlink /proc/$conmon_pid_from_file/exe)" ".*/conmon"  \
-       "conmon pidfile (= PID $conmon_pid_from_file) points to conmon process"
+    if is_freebsd; then
+	is "$(readlink /proc/$conmon_pid_from_file/file)" ".*/conmon"  \
+	   "conmon pidfile (= PID $conmon_pid_from_file) points to conmon process"
+    else
+	is "$(readlink /proc/$conmon_pid_from_file/exe)" ".*/conmon"  \
+	   "conmon pidfile (= PID $conmon_pid_from_file) points to conmon process"
+    fi
 
     # All OK. Kill container.
     run_podman rm -f -t0 $cid
@@ -431,15 +437,21 @@ echo $rand        |   0 | $rand
 # bats test_tags=ci:parallel
 @test "podman run --log-driver" {
     # '-' means that LogPath will be blank and there's no easy way to test
-    tests="
+    if is_freebsd; then
+	tests="
+none      | -
+k8s-file  | y
+json-file | f
+"
+    else
+	tests="
 none      | -
 journald  | -
 k8s-file  | y
 json-file | f
 "
-
+    fi
     defer-assertion-failures
-
     while read driver do_check; do
         msg=$(random_string 15)
         cname=c_$(safename)
@@ -543,6 +555,7 @@ json-file | f
 
 # bats test_tags=ci:parallel
 @test "podman run --tz with zoneinfo" {
+    skip_if_freebsd "systemd not supported"
     _prefetch $SYSTEMD_IMAGE
 
     # First make sure that zoneinfo is actually in the image otherwise the test is pointless
@@ -718,7 +731,7 @@ json-file | f
     done
 
     run_podman 1 run --rm -v ${PODMAN_TMPDIR}:/run:Z $IMAGE stat -c '%s' /run/.containerenv
-    is "$output" "stat: can't stat '/run/.containerenv': No such file or directory" "do not create .containerenv on bind mounts"
+    is "$output" "stat: .* '/run/.containerenv': No such file or directory" "do not create .containerenv on bind mounts"
 
     # Prep work: get ID of image; make a cont. name; determine if we're rootless
     run_podman inspect --format '{{.ID}}' $IMAGE
@@ -758,6 +771,8 @@ json-file | f
 
 # bats test_tags=ci:parallel
 @test "podman run - check workdir" {
+    skip_if_freebsd "depends on overlay which is not supported yet"
+
     # Workdirs specified via the CLI are not created on the root FS.
     run_podman 126 run --rm --workdir /i/do/not/exist $IMAGE pwd
     # Note: remote error prepends an attach error.
@@ -870,6 +885,7 @@ json-file | f
 
 # bats test_tags=ci:parallel
 @test "podman run no /etc/mtab " {
+    skip_if_freebsd "/etc/mtab doesn't exist"
     tmpdir=$PODMAN_TMPDIR/build-test
     mkdir -p $tmpdir
 
@@ -1036,6 +1052,7 @@ EOF
 # rhbz#1902979 : podman run fails to update /etc/hosts when --uidmap is provided
 # bats test_tags=ci:parallel
 @test "podman run update /etc/hosts" {
+    skip_if_freebsd "uidmap not supported"
     skip_if_cgroupsv1 "run --uidmap fails on cgroups v1 (issue 15025, wontfix)"
     HOST=$(random_string 25)
     run_podman run --uidmap 0:10001:10002 --rm --hostname ${HOST} $IMAGE grep ${HOST} /etc/hosts
@@ -1044,6 +1061,7 @@ EOF
 
 # bats test_tags=ci:parallel
 @test "podman run doesn't override oom-score-adj" {
+    skip_if_freebsd "oom-score-adj not supported"
     current_oom_score_adj=$(cat /proc/self/oom_score_adj)
     run_podman run --rm $IMAGE cat /proc/self/oom_score_adj
     is "$output" "$current_oom_score_adj" "different oom_score_adj in the container"
@@ -1082,6 +1100,8 @@ EOF
 # CVE-2022-1227 : podman top joins container mount NS and uses nsenter from image
 # bats test_tags=ci:parallel
 @test "podman top does not use nsenter from image" {
+    skip_if_freebsd "depends on linux implementation detail"
+
     keepid="--userns=keep-id"
     is_rootless || keepid=""
 
@@ -1122,6 +1142,7 @@ EOF
 # bats test_tags=distro-integration, ci:parallel
 @test "podman run --device-read-bps" {
     skip_if_rootless "cannot use this flag in rootless mode"
+    skip_if_freebsd "cgroups not supported"
 
     if test \! -e /dev/nullb0; then
         skip "/dev/nullb0 not present, use 'modprobe null_blk nr_devices=1' to create it"
@@ -1147,6 +1168,8 @@ EOF
 
 # bats test_tags=ci:parallel
 @test "podman run failed --rm " {
+    skip_if_freebsd "helpers.network.bash not supported"
+
     port=$(random_free_port)
 
     # Container names must sort alphanumerically
@@ -1185,6 +1208,7 @@ EOF
 # bats test_tags=ci:parallel
 @test "podman run --privileged as root with systemd will not mount /dev/tty" {
     skip_if_rootless "this test only makes sense as root"
+    skip_if_freebsd
 
     # First, confirm that we _have_ /dev/ttyNN devices on the host.
     # ('skip' would be nicer in some sense... but could hide a regression.
@@ -1241,6 +1265,7 @@ EOF
 # 16925: --privileged + --systemd = share non-virtual-terminal TTYs (both rootful and rootless)
 # bats test_tags=ci:parallel
 @test "podman run --privileged as root with systemd mounts non-vt /dev/tty devices" {
+    skip_if_freebsd
     # First, confirm that we _have_ non-virtual terminal /dev/tty* devices on
     # the host.
     non_vt_tty_devices_count=$(find /dev -regex '/dev/tty[^0-9].*' | wc -w)
@@ -1261,6 +1286,7 @@ EOF
 
 # bats test_tags=ci:parallel
 @test "podman run read-only from containers.conf" {
+    skip_if_freebsd "TODO(dfr): add support for read_only"
     containersconf=$PODMAN_TMPDIR/containers.conf
     cat >$containersconf <<EOF
 [containers]
@@ -1287,6 +1313,7 @@ touch: /run/e: Read-only file system"
 # bats test_tags=ci:parallel
 @test "podman run ulimit from containers.conf" {
     skip_if_remote "containers.conf has to be set on remote, only tested on E2E test"
+    skip_if_freebsd "/proc/self/limits not supported"
     containersconf=$PODMAN_TMPDIR/containers.conf
     # Safe minimum: anything under 27 barfs w/ "crun: ... Too many open files"
     nofile1=$((30 + RANDOM % 10000))
@@ -1399,6 +1426,7 @@ EOF
 # bats test_tags=ci:parallel
 @test "podman run --net=host --cgroupns=host with read only cgroupfs" {
     skip_if_rootless_cgroupsv1
+    skip_if_freebsd "cgroups not supported"
 
     if is_cgroupsv1; then
         # verify that the memory controller is mounted read-only

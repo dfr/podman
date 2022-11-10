@@ -978,6 +978,9 @@ function skip_if_rootless_cgroupsv1() {
 #  skip_if_journald_unavailable  #  rhbz#1895105: rootless journald permissions
 ##################################
 function skip_if_journald_unavailable {
+    if is_freebsd; then
+        skip "journald does not exist on FreeBSD"
+    fi
     if journald_unavailable; then
         skip "Cannot use rootless journald on this system"
     fi
@@ -986,6 +989,13 @@ function skip_if_journald_unavailable {
 function skip_if_aarch64 {
     if is_aarch64; then
         skip "${msg:-Cannot run this test on aarch64 systems}"
+    fi
+}
+
+function skip_if_freebsd {
+    if is_freebsd; then
+        local msg=$(_add_label_if_missing "$1" "freebsd")
+        skip "${msg:-Cannot run this test on FreeBSD}"
     fi
 }
 
