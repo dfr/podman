@@ -20,18 +20,27 @@ load helpers
         require_warning "StopSignal SIGTERM failed to stop container .*, resorting to SIGKILL"
     fi
 
-    # Confirm that container is stopped. Podman-remote unfortunately
-    # cannot tell the difference between "stopped" and "exited", and
-    # spits them out interchangeably, so we need to recognize either.
-    run_podman inspect --format '{{.State.Status}} {{.State.ExitCode}}' $cid
-    is "$output" "\\(stopped\|exited\\) \+137" \
-       "Status and exit code of stopped container"
+    if is_freebsd; then
+	# FreeBSD doesn't have pid namespaces so we don't have the
+	# problem of SIGTERM being ignored - the process will exit
+	# immediately
+	run_podman inspect --format '{{.State.Status}} {{.State.ExitCode}}' $cid
+	is "$output" "\\(stopped\|exited\\) \+143" \
+	   "Status and exit code of stopped container"
+    else
+	# Confirm that container is stopped. Podman-remote unfortunately
+	# cannot tell the difference between "stopped" and "exited", and
+	# spits them out interchangeably, so we need to recognize either.
+	run_podman inspect --format '{{.State.Status}} {{.State.ExitCode}}' $cid
+	is "$output" "\\(stopped\|exited\\) \+137" \
+	   "Status and exit code of stopped container"
 
-    # The initial SIGTERM is ignored, so this operation should take
-    # exactly 10 seconds. Give it some leeway.
-    delta_t=$(( $t1 - $t0 ))
-    assert $delta_t -gt  8 "podman stop: ran too quickly!"
-    assert $delta_t -le 14 "podman stop: took too long"
+	# The initial SIGTERM is ignored, so this operation should take
+	# exactly 10 seconds. Give it some leeway.
+	delta_t=$(( $t1 - $t0 ))
+	assert $delta_t -gt  8 "podman stop: ran too quickly!"
+	assert $delta_t -le 14 "podman stop: took too long"
+    fi
 
     run_podman rm $cid
 }
@@ -84,15 +93,20 @@ load helpers
 # DO NOT PARALLELIZE! (due to stop -a)
 @test "podman stop print IDs or raw input" {
     # stop -a must print the IDs
-    run_podman run -d $IMAGE top
+    run_podman run -d $IMAGE sleep infinity
     ctrID="$output"
     run_podman stop -t0 --all
     is "$output" "$ctrID"
 
     # stop $input must print $input
     cname=$(random_string)
-    run_podman run -d --name $cname $IMAGE top
+    if is_freebsd; then
+	run_podman run -d -v /compat/linux/proc:/compat/linux/proc --name $cname $IMAGE top
+    else
+	run_podman run -d --name $cname $IMAGE top
+    fi
     run_podman stop -t0 $cname
+
     is "$output" $cname
 
     run_podman rm -t 0 -f $ctrID $cname
@@ -134,7 +148,7 @@ load helpers
     for t_opt in '' '--time=5' '--timeout=5'; do
         # Run a simple container that logs output on SIGTERM
         run_podman run -d $IMAGE sh -c \
-                   "trap 'echo Received SIGTERM, finishing; exit' SIGTERM; echo READY; while :; do sleep 1; done"
+                   "trap 'echo Received SIGTERM, finishing; exit 0' SIGTERM; echo READY; while :; do sleep 1; done"
         cid="$output"
         wait_for_ready $cid
 
@@ -222,6 +236,7 @@ load helpers
 
 # bats test_tags=ci:parallel
 @test "podman stop -t 1 Generate warning" {
+    skip_if_freebsd "no pid namespaces"
     skip_if_remote "warning only happens on server side"
 
     ctrname="c-stopme-$(safename)"
@@ -240,7 +255,11 @@ load helpers
 # bats test_tags=ci:parallel
 @test "podman stop --noout" {
     ctrname="c-$(safename)"
-    run_podman run --rm --name $ctrname -d $IMAGE top
+    if is_freebsd; then
+	run_podman run --rm -v /compat/linux/proc:/compat/linux/proc --name $ctrname -d $IMAGE top
+    else
+	run_podman run --rm --name $ctrname -d $IMAGE top
+    fi
     run_podman --noout stop -t 0 $ctrname
     is "$output" "" "output should be empty"
 }

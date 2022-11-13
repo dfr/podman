@@ -140,6 +140,8 @@ function __run_healthcheck_container() {
 
 # bats test_tags=ci:parallel
 @test "podman container rm doesn't affect stopping containers" {
+    skip_if_freebsd "TODO(dfr): implement stop timeout"
+
     local cname=c-$(safename)
     __run_healthcheck_container $cname
     local cid=$output
