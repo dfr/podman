@@ -40,7 +40,7 @@ load helpers
     local -A cid
 
     # Create three containers, each of whose CID begins with a different char
-    run_podman run -d --name running $IMAGE top
+    run_podman run -d --name running $IMAGE sleep infinity
     cid[running]=$output
 
     cid[stopped]=$output
