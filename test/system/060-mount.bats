@@ -107,7 +107,7 @@ load helpers
     # Variations on a theme (not by Paganini). All of these should fail.
     for varopt in readonly readonly=true ro=true ro rw=false;do
         run_podman 1 run --rm -q --mount $stdopts,$varopt $IMAGE touch $volpath/a
-        is "$output" "touch: $volpath/a: Read-only file system" "with $varopt"
+        is "$output" "touch: .*$volpath/a.* Read-only file system" "with $varopt"
     done
 
     # All of these should pass
@@ -119,6 +119,7 @@ load helpers
 
 # bats test_tags=ci:parallel
 @test "podman run --mount image" {
+    skip_if_freebsd "image mounts limited to read-only"
     skip_if_rootless "too hard to test rootless"
 
     # For parallel safety: create a temporary image to use for mounts
@@ -217,7 +218,7 @@ load helpers
     skip_if_rootless "too hard to test rootless"
 
     # Run a container in the background
-    run_podman run -d --mount type=image,src=$IMAGE,dst=/image-mount,rw=true $IMAGE sleep infinity
+    run_podman run -d --mount type=image,src=$IMAGE,dst=/image-mount,rw=false $IMAGE sleep infinity
     cid="$output"
 
     run_podman inspect --format "{{(index .Mounts 0).Type}}" $cid
@@ -230,7 +231,7 @@ load helpers
     is "$output" "/image-mount" "inspect data includes image mount source"
 
     run_podman inspect --format "{{(index .Mounts 0).RW}}" $cid
-    is "$output" "true" "inspect data includes image mount source"
+    is "$output" "false" "inspect data includes image mount source"
 
     run_podman rm -t 0 -f $cid
 }

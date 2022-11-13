@@ -7,6 +7,10 @@
 
 load helpers
 
+if is_freebsd; then
+    _PODMAN_TEST_OPTS=-v /compat/linux/proc:/compat/linux/proc
+fi
+
 # All tests here can be run in parallel
 # bats file_tags=ci:parallel
 
@@ -850,7 +854,7 @@ load helpers
 
     # ls, and confirm it's there.
     run_podman exec $cpcontainer ls -l $graphroot/$rand_filename
-    is "$output" "-rw-r--r-- .* 1 .* root .* 51 .* $graphroot/$rand_filename" \
+    is "$output" "-rw-r--r-- .* 1 .*root .* 51 .* $graphroot/$rand_filename" \
        "File is copied into container in the correct (full) path"
 
     # Confirm it has the expected content (this is unlikely to ever fail)

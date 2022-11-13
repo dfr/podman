@@ -2,6 +2,10 @@
 
 load helpers
 
+if is_freebsd; then
+    _PODMAN_TEST_OPTS=-v /compat/linux/proc:/compat/linux/proc
+fi
+
 # Very simple test
 # bats test_tags=ci:parallel
 @test "podman stop - basic test" {
@@ -100,11 +104,7 @@ load helpers
 
     # stop $input must print $input
     cname=$(random_string)
-    if is_freebsd; then
-	run_podman run -d -v /compat/linux/proc:/compat/linux/proc --name $cname $IMAGE top
-    else
-	run_podman run -d --name $cname $IMAGE top
-    fi
+    run_podman run -d --name $cname $IMAGE top
     run_podman stop -t0 $cname
 
     is "$output" $cname
@@ -255,11 +255,7 @@ load helpers
 # bats test_tags=ci:parallel
 @test "podman stop --noout" {
     ctrname="c-$(safename)"
-    if is_freebsd; then
-	run_podman run --rm -v /compat/linux/proc:/compat/linux/proc --name $ctrname -d $IMAGE top
-    else
-	run_podman run --rm --name $ctrname -d $IMAGE top
-    fi
+    run_podman run --rm --name $ctrname -d $IMAGE top
     run_podman --noout stop -t 0 $ctrname
     is "$output" "" "output should be empty"
 }
@@ -281,3 +277,4 @@ load helpers
     is "$(ls $OCIDir | grep $cid)" "" "The OCI runtime directory should have been removed"
 }
 # vim: filetype=sh
+
