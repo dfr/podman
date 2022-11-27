@@ -59,7 +59,7 @@ load helpers
     is "$(check_exec_pid)" "" "exec pid hash file indeed doesn't exist"
 
     for i in {1..3}; do
-        run_podman exec $cid /bin/true
+        run_podman exec $cid true
     done
 
     is "$(check_exec_pid)" "" "there isn't any exec pid hash file leak"
@@ -71,7 +71,7 @@ load helpers
 # Issue #5046 - piping to exec truncates results (actually a conmon issue)
 # bats test_tags=ci:parallel
 @test "podman exec - cat from stdin" {
-    run_podman run -d $IMAGE top
+    run_podman run -dt $IMAGE sleep 3600
     cid="$output"
 
     echo_string=$(random_string 20)
@@ -116,7 +116,7 @@ load helpers
     local bigfile=${PODMAN_TMPDIR}/bigfile
     local newfile=${PODMAN_TMPDIR}/newfile
     # create a big file, bigger than the 8K buffer size
-    base64 /dev/urandom | head -c 20K > $bigfile
+    base64 /dev/urandom | head -c 20000 > $bigfile
 
     run_podman run --rm -v $bigfile:/tmp/test:Z $IMAGE cat /tmp/test
     printf "%s" "$output" > $newfile

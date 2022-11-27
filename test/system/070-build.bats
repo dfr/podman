@@ -8,6 +8,8 @@ load helpers
 
 # bats test_tags=distro-integration
 @test "podman build - basic test" {
+    skip_if_freebsd "no packaging tools in testimage"
+
     rand_filename=$(random_string 20)
     rand_content=$(random_string 50)
 
@@ -78,7 +80,10 @@ EOF
     assert "${lines[0]}" = "${lines[4]}" "devnum( / ) = devnum( /[ )"
     assert "${lines[0]}" = "${lines[5]}" "devnum( / ) = devnum( /[etc )"
     assert "${lines[0]}" = "${lines[7]}" "devnum( / ) = devnum( /etc )"
-    assert "${lines[6]}" = "${lines[8]}" "devnum( /[etc/foo, ) = devnum( /etc/bar] )"
+    # FreeBSD nullfs uses a unique dev for each mount
+    if ! is_freebsd; then
+	assert "${lines[6]}" = "${lines[8]}" "devnum( /[etc/foo, ) = devnum( /etc/bar] )"
+    fi
     # ...then, check volumes; these differ between overlay and vfs.
     # Under Overlay (usual case), these will be different. On VFS, they're the same.
     local op="!="
@@ -88,8 +93,10 @@ EOF
     assert "${lines[0]}" $op "${lines[3]}" "devnum( / ) $op devnum( volume0 )"
     assert "${lines[0]}" $op "${lines[6]}" "devnum( / ) $op devnum( volume1 )"
 
-    # FIXME: is this expected? I thought /a/b/c and /[etc/foo, would differ
-    assert "${lines[3]}" = "${lines[6]}" "devnum( volume0 ) = devnum( volume1 )"
+    if ! is_freebsd; then
+	# FIXME: is this expected? I thought /a/b/c and /[etc/foo, would differ
+	assert "${lines[3]}" = "${lines[6]}" "devnum( volume0 ) = devnum( volume1 )"
+    fi
 
     run_podman rmi -f $imgname
 }
@@ -840,6 +847,8 @@ EOF
 # necessary.
 # NOT PARALLELIZABLE because it pulls alpine and runs prune -f
 @test "build with copy-from referencing the base image" {
+  skip_if_freebsd "depends on running linux-only image"
+
   target="derived-$(safename)"
   target_mt="derived-mt-$(safename)"
   tmpdir=$PODMAN_TMPDIR/build-test
@@ -966,6 +975,7 @@ EOF
 }
 
 @test "podman build check_seccomp_ulimits" {
+    skip_if_freebsd "no seccomp"
     tmpdir=$PODMAN_TMPDIR/build-test
     mkdir -p $tmpdir
     tmpbuilddir=$tmpdir/build
