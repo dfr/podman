@@ -14,7 +14,7 @@ github.com/Microsoft/go-winio/internal/socket
 github.com/Microsoft/go-winio/pkg/guid
 github.com/Microsoft/go-winio/pkg/security
 github.com/Microsoft/go-winio/vhd
-# github.com/Microsoft/hcsshim v0.9.5
+# github.com/Microsoft/hcsshim v0.9.6
 ## explicit; go 1.13
 github.com/Microsoft/hcsshim
 github.com/Microsoft/hcsshim/computestorage
@@ -92,7 +92,7 @@ github.com/containernetworking/cni/pkg/types/create
 github.com/containernetworking/cni/pkg/types/internal
 github.com/containernetworking/cni/pkg/utils
 github.com/containernetworking/cni/pkg/version
-# github.com/containernetworking/plugins v1.1.1
+# github.com/containernetworking/plugins v1.2.0
 ## explicit; go 1.17
 github.com/containernetworking/plugins/pkg/ns
 # github.com/containers/buildah v1.28.1-0.20221130132810-cf661299d14f
@@ -576,7 +576,7 @@ github.com/onsi/ginkgo/reporters/stenographer
 github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable
 github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
 github.com/onsi/ginkgo/types
-# github.com/onsi/gomega v1.24.1
+# github.com/onsi/gomega v1.24.2
 ## explicit; go 1.18
 github.com/onsi/gomega
 github.com/onsi/gomega/format
@@ -735,7 +735,7 @@ github.com/vbauerster/mpb/v7
 github.com/vbauerster/mpb/v7/cwriter
 github.com/vbauerster/mpb/v7/decor
 github.com/vbauerster/mpb/v7/internal
-# github.com/vishvananda/netlink v1.1.1-0.20220115184804-dd687eb2f2d4
+# github.com/vishvananda/netlink v1.2.1-beta.2
 ## explicit; go 1.12
 github.com/vishvananda/netlink
 github.com/vishvananda/netlink/nl
@@ -793,7 +793,7 @@ golang.org/x/crypto/ssh/knownhosts
 # golang.org/x/mod v0.6.0
 ## explicit; go 1.17
 golang.org/x/mod/semver
-# golang.org/x/net v0.2.0
+# golang.org/x/net v0.4.0
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/html
@@ -811,7 +811,7 @@ golang.org/x/net/trace
 ## explicit
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.2.0
+# golang.org/x/sys v0.4.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -821,10 +821,10 @@ golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
 golang.org/x/sys/windows/svc/eventlog
-# golang.org/x/term v0.2.0
+# golang.org/x/term v0.3.0
 ## explicit; go 1.17
 golang.org/x/term
-# golang.org/x/text v0.4.0
+# golang.org/x/text v0.5.0
 ## explicit; go 1.17
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
