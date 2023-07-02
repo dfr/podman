@@ -371,6 +371,7 @@ Deleted: $pauseID"
 # CANNOT BE PARALLELIZED: relies on exact set of images in store
 @test "podman pull image with additional store" {
     skip_if_remote "only works on local"
+    skip_if_freebsd "overlay storage driver not available"
 
     # overlay or vfs
     local storagedriver="$(podman_storage_driver)"

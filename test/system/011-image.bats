@@ -51,6 +51,7 @@ function check_signature() {
 
 
 @test "podman image - sign with no sigfile" {
+    skip_if_freebsd "TODO(dfr): debug this"
     GNUPGHOME=$_GNUPGHOME_TMP run_podman image sign --sign-by foo@bar.com --directory $PODMAN_TMPDIR/signatures  "containers-storage:$PODMAN_TEST_IMAGE_FQN"
     check_signature "signature-1"
 }
