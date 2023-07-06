@@ -19,5 +19,19 @@ func openUnixSocket(path string) (*net.UnixConn, error) {
 	if err := os.Symlink(path, tmpsockpath); err != nil {
 		return nil, err
 	}
-	return net.DialUnix("unixpacket", nil, &net.UnixAddr{Name: tmpsockpath, Net: "unixpacket"})
+	conn, err := net.DialUnix("unixpacket", nil, &net.UnixAddr{Name: tmpsockpath, Net: "unixpacket"})
+	if err != nil {
+		return nil, err
+	}
+	err = conn.SetReadBuffer(32768)
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+	err = conn.SetWriteBuffer(32768)
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+	return conn, nil
 }
