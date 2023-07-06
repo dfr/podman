@@ -8,6 +8,7 @@ load helpers.systemd
 
 # bats test_tags=distro-integration, ci:parallel
 @test "podman pause/unpause" {
+    skip_if_freebsd "pause/unpause not supported"
     if is_rootless && ! is_cgroupsv2; then
         skip "'podman pause' (rootless) only works with cgroups v2"
     fi
@@ -67,6 +68,8 @@ load helpers.systemd
 # CANNOT BE PARALLELIZED! (because of unpause --all)
 # bats test_tags=distro-integration
 @test "podman unpause --all" {
+    skip_if_freebsd "pause/unpause not supported"
+
     if is_rootless && ! is_cgroupsv2; then
         skip "'podman pause' (rootless) only works with cgroups v2"
     fi
