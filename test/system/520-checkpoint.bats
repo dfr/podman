@@ -8,6 +8,8 @@ load helpers.network
 
 CHECKED_ROOTLESS=
 function setup() {
+    skip_if_freebsd "no support for checkpoints"
+
     # None of these tests work rootless....
     if is_rootless; then
         # ...however, is that a genuine cast-in-stone limitation, or one
