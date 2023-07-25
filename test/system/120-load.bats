@@ -220,6 +220,8 @@ verify_iid_and_name() {
 }
 
 @test "podman load - from URL" {
+    skip_if_freebsd "no busybox-extras in testimage"
+
     get_iid_and_name
     run_podman save $img_name -o $archive
     run_podman rmi $iid
