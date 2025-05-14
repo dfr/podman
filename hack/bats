@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # bats wrapper - invokes bats, root & rootless, on podman system tests
 #
@@ -76,6 +76,16 @@ declare -a bats_opts=()
 declare -a bats_filter=()
 
 declare -a TESTS
+
+function is_freebsd {
+    [ "$(uname -s)" = "FreeBSD" ]
+}
+
+if is_freebsd; then
+    function expr {
+	gexpr "$@"
+    }
+fi
 
 for i;do
     value=`expr "$i" : '[^=]*=\(.*\)'`
